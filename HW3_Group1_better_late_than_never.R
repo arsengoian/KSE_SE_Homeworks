@@ -331,6 +331,18 @@ f_MAE(f_2t, FORECAST_LENGTH)
 f_MAPE(f_2t, FORECAST_LENGTH)
 
 
+model_report <- function(name, m, n) {
+  return( c(name, f_bias(m,n), f_RMSE(m,n), f_MAE(m,n), f_MAPE(m,n)))
+}
+
+different_models_report <- data.frame(
+  model_101 = model_report("Arima 101", f_1t, FORECAST_LENGTH),
+  model_201 = model_report("Arima 201", f_2t, FORECAST_LENGTH)
+)
+
+print(different_models_report)
+
+
 
 #############################################################
 
