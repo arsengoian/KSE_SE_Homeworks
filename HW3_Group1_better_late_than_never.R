@@ -304,8 +304,6 @@ f_bias <- function(estimated_values, P) {
   return( estimated_values %>% e_f %>% f_average(P))  
 }
 
-f_bias
-
 f_RMSE <- function(estimated_values, P) {
   return( estimated_values %>% e_f %>% `^`(2) %>% f_average(P) %>% sqrt )
 }
@@ -321,7 +319,6 @@ f_MAPE <- function(estimated_values, P) {
 
 f_arima101 <- estimation %>% filter(.model == 'arima101')
 f_arima201 <- estimation %>% filter(.model == 'arima201')
-f_arma207 <- estimation %>% filter(.model == 'best_model')
 
 
 f_bias(f_arima101, FORECAST_LENGTH)
@@ -330,16 +327,10 @@ f_MAE(f_arima101, FORECAST_LENGTH) # 0.75, as expected
 f_MAPE(f_arima101, FORECAST_LENGTH) # 3.67 = 367%
 
 
-f_bias(f_arima201, FORECAST_LENGTH)
-f_RMSE(f_arima201, FORECAST_LENGTH)
-f_MAE(f_arima201, FORECAST_LENGTH)
-f_MAPE(f_arima201, FORECAST_LENGTH)
-
-f_bias(f_1t, FORECAST_LENGTH)
-f_RMSE(f_1t, FORECAST_LENGTH) # 0.859, exactly as expected
-f_MAE(f_1t, FORECAST_LENGTH) # 0.75, as expected
-f_MAPE(f_1t, FORECAST_LENGTH) # 3.67 = 367%
-
+f_bias(f_arima201, FORECAST_LENGTH) # 0.1149302
+f_RMSE(f_arima201, FORECAST_LENGTH) # 0.8670345
+f_MAE(f_arima201, FORECAST_LENGTH) # 0.7577366
+f_MAPE(f_arima201, FORECAST_LENGTH) #3.656373
 
 
 
