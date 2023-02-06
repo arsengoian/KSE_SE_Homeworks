@@ -1,0 +1,148 @@
+---
+title: "R Notebook"
+output: html_document
+---
+
+Please generate (simulate) stationary AR(p), MA(q) and ARMA(p,q) processes. With p,q<=5
+Construct ACFs and PACFs for these processes
+Comment on key points or take aways you can learn from observing the ACFs and PACFs patterns
+
+
+```{r}
+
+all_plots <- function(xs, name) {
+    plot(xs, type = "l", main=name)
+    plot(acf(xs, plot = FALSE), main=paste("ACF (", name, ")"))
+    plot(pacf(xs, plot = FALSE), main=paste("PACF (", name, ")"))
+}
+
+simulate_time_series <- function(p, n, process, name) {
+  print(name)
+  print('')
+
+  # Set the parameters for the process. We'll use random intercept and coefficients each time
+  intercept <- rnorm(1)^2
+  coef_proportions <- rnorm(p)
+  coefs <- coef_proportions * 0.9 / sum(abs(coef_proportions)) # Sum must not be larger than 1
+
+  # Generate white noise
+  white_noise <- rnorm(n = n)
+
+  # Initialize the simulated data
+  xs <- rep(0, n)
+
+  # Simulate
+  xs <- process(p, n, xs, coefs, white_noise, intercept)
+
+  print("Intercept:")
+  show(intercept)
+
+  print("Coefficients:")
+  show(coefs)
+
+  # Plot the simulated data
+  all_plots(xs, name)
+}
+
+ar <- function(p, n, xs, coefs, white_noise, intercept) {
+
+  # Iterate through the past values to generate the next value
+  for (i in 1:n) {
+    value <- intercept + white_noise[i]
+    for (j in 1:p) {
+      if (i > j)
+        value <- value + coefs[j] * xs[i - j]
+    }
+
+    xs[i] <- value
+  }
+
+  return (xs)
+}
+
+ma <- function(q, n, xs, coefs, white_noise, intercept) {
+  # Iterate through the past errors to generate the next value
+  for (i in 1:n) {
+    value <- intercept + white_noise[i]
+    for (j in 1:q) {
+      if (i > j)
+        value <- value + coefs[j] * white_noise[i - j] # Difference with AR: we're using white_noice instead of xs
+    }
+
+    xs[i] <- value
+  }
+
+  return (xs)
+}
+
+simulate_arma <- function(p, q, n, name) {
+  print(name)
+  print('')
+
+  # Set the parameters for the process. We'll use random intercept and coefficients each time
+  intercept <- rnorm(1)^2
+  coef_proportions_ar <- rnorm(p)
+  coefs_ar <- coef_proportions_ar * 0.9 / sum(abs(coef_proportions_ar)) # Sum must not be larger than 1
+  coef_proportions_ma <- rnorm(q)
+  coefs_ma <- coef_proportions_ma * 0.9 / sum(abs(coef_proportions_ma)) # Sum must not be larger than 1
+
+  # Generate white noise
+  white_noise <- rnorm(n = n)
+
+  # Initialize the simulated data
+  xs <- rep(0, n)
+
+  # Simulate
+  for (i in 1:n) {
+    value <- intercept + white_noise[i]
+
+    # AR component
+    for (j in 1:p) {
+      if (i > j)
+        value <- value + coefs_ar[j] * xs[i - j]
+    }
+
+    # MA component
+    for (k in 1:q) {
+      if (i > k)
+        value <- value + coefs_ma[k] * white_noise[i - k]
+    }
+
+    xs[i] <- value
+  }
+
+  print("Intercept:")
+  show(intercept)
+
+  print("Coefficients:")
+  show(coefs_ar)
+  show(coefs_ma)
+
+  # Plot the simulated data
+  all_plots(xs, name)
+}
+
+n <- 500
+
+# Crazy option to generate 35*3 graphs
+# # Get all graphs for AR
+# for (p in 1:5)
+#     simulate_time_series(p, n, ar, paste("AR (", p, ")"))
+#
+# # Get all graphs for MA
+# for (q in 1:5)
+#     simulate_time_series(q, n, ma, paste("MA (", q, ")"))
+#
+# for (p in 1:5)
+#     for (q in 1:5)
+#         simulate_arma(p,q,n,  paste("AR (", p, ", ",q, ")"))
+
+
+p <- 2
+q <- 4
+simulate_time_series(p, n, ar, paste("AR (", p, ")"))
+simulate_time_series(q, n, ma, paste("MA (", q, ")"))
+simulate_arma(p,q,n,  paste("AR (", p, ", ",q, ")"))
+
+```
+
