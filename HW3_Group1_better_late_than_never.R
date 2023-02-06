@@ -28,6 +28,9 @@ library(rugarch)
 
 # 0.1 UPLOADING DATA
 
+USMacro_rates <- read_xls("quarterly.xls", sheet = 1, col_types = c("text", rep("numeric", 18))) 
+
+
 USMacro_rates <- tryCatch(
   {
     return(read_xls("quarterly.xls", sheet = 1, col_types = c("text", rep("numeric", 18))))
@@ -198,7 +201,7 @@ gg_arma(fit %>% select(arima101, arima201))
 
 #finding best model according to our consideration
 best_model_ours <- auto.arima(macro_spread_models$ir_spread)
-summary(best_model)
+summary(best_model_ours)
 
 
 ###########################################################
@@ -234,14 +237,43 @@ macro_spread_forecast <- USMacro_tsb %>%
   head(-1*FORECAST_LENGTH) # cut the period
 autoplot(macro_spread_forecast)
 
+
 fore_fit <- macro_spread_forecast %>%
   model(arima101 = ARIMA(ir_spread ~ pdq(1,0,1)),
         arima201 = ARIMA(ir_spread ~ pdq(2,0,1)),
         auto = ARIMA(ir_spread, stepwise = FALSE, greedy = FALSE))
+fore_fit
+
+glance(fore_fit)
+
+
 
 
 # Plot both forecast and actual values
 fore_fit %>% fabletools::forecast(h = FORECAST_LENGTH) %>% autoplot(macro_spread_models)
+
+# ATTEMPT: Visulising fitted vs actual
+
+fit.arima<-fitted.values(best_model)
+str(arima2)
+str(best_model)
+low<-fit.arima-1.96*sqrt(ht) #generate heteroscedastic 95% CIs
+high<-fit.arima+1.96*sqrt(ht)
+plot.ts(Y, col='blue')
+lines(fit.arima, col='red')
+  lines(low, col='red')
+  lines(high, col='red')
+
+
+# ATTEMPT - visualising forecast
+mydata.arima214 <- arima(macro_spread_forecast$ir_spread, order = c(2,1,4))
+mydata.pred1 <- predict(mydata.arima111, n.ahead=100)
+plot.ts(macro_spread_forecast$ir_spread)
+lines(mydata.pred1$pred, col="blue")
+lines(mydata.pred1$pred+2*mydata.pred1$se, col="red")
+lines(mydata.pred1$pred-2*mydata.pred1$se, col="red")
+
+
 
 # ESTIMATION FORECAST
 estimation <- fore_fit %>% dplyr::select(auto, arima101, arima201) %>% fabletools::forecast(h = FORECAST_LENGTH)
