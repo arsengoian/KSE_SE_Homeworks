@@ -28,13 +28,20 @@ library(zoo)
 library(urca)
 library(rugarch)
 library(Metrics)
-
+library(fGarch)
 
 # UPLOAD
-setwd("/Users/dariasivka/Desktop/KSE_EA24/Econometrics_III/HW/HW3")
+
+
 raw_data <- read_excel("CMO-Historical-Data-Monthly.xlsx", 
                        sheet = "Monthly Prices", skip = 6) 
 raw_data <- raw_data %>% dplyr::slice(143:nrow(raw_data))
+
+
+#setwd("/Users/dariasivka/Desktop/KSE_EA24/Econometrics_III/HW/HW3")
+#raw_data <- read_excel("CMO-Historical-Data-Monthly.xlsx", 
+#                       sheet = "Monthly Prices", skip = 6) 
+#raw_data <- raw_data %>% dplyr::slice(143:nrow(raw_data))
 
 # CLEAN DATE
 raw_data$...1 <- as.yearmon(raw_data$...1, format = "%YM%m") 
@@ -126,7 +133,7 @@ arima(price_train, order = c(1,1,1))
 arima_t <- arima(price_train, order = c(1,1,1))
 resid_arima <- residuals(arima_t)
 
-Box.test(resid_t, lag=5) # >> p-value = 0.291
+Box.test(resid_arima, lag=5) # >> p-value = 0.291
 
 
 # RESIDUALS
@@ -135,21 +142,19 @@ resid2_sq<-resid_arima^2
 ggtsdisplay(resid2_sq)
 
 # LM TEST >> p-value = 1.807e-12 >> artch effect present
-resid2ArchLM <- FinTS::ArchTest(resid_t, lags=2, demean=TRUE)
+resid2ArchLM <- FinTS::ArchTest(resid_arima, lags=2, demean=TRUE)
 resid2ArchLM
 
 #LET US TRY SOME GARCH
-arch_t = garchFit(~garch(1, 0), data = price_train_df, cond.dist = c("std"), trace = F)
-summary(md_arch_t) #do not looks good
+arch_t <- garchFit(~garch(1, 0), data = price_train_df, cond.dist = c("std"), trace = F)
+summary(arch_t) #do not looks good
 
 #ESTIMATE garch_t = garchFit(~garch(1, 1), data = price_train_df, trace = F)
-summary(garch_t)
-pred_garch_G = predict(garch_t, 10, plot = TRUE)
-pred_garch_G[1]
 garch_t = garchFit(~garch(1, 1), data = price_train_df, trace = F)
 summary(garch_t)
 pred_garch_G = predict(garch_t, 10, plot = TRUE)
 pred_garch_G[1]
+
 rmse(predicted = as.numeric(unlist(pred_garch_G[1])), actual = as.numeric(unlist(price_test_df)))
 mape(predicted = as.numeric(unlist(pred_garch_G[1])), actual = as.numeric(unlist(price_test_df)))
 mae(predicted = as.numeric(unlist(pred_garch_G[1])), actual = as.numeric(unlist(price_test_df)))
@@ -167,7 +172,7 @@ arima_garch_2023 <- garchFit(price_2023_df~arma(1,1)+garch(1,1), data=price_2023
 predict_2023 = predict(arima_garch_2023,n.ahead = 12, plot = TRUE)
 predict_2023[1]
 
-dev.off()
+#dev.off()
 
 
 
