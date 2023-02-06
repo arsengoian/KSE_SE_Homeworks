@@ -31,8 +31,6 @@ library(Metrics)
 library(fGarch)
 
 # UPLOAD
-
-
 raw_data <- read_excel("CMO-Historical-Data-Monthly.xlsx", 
                        sheet = "Monthly Prices", skip = 6) 
 raw_data <- raw_data %>% dplyr::slice(143:nrow(raw_data))
@@ -60,7 +58,6 @@ arima_gold <- tsb_gold %>% filter_index("1971 Dec" ~ "2022 Feb")
 adf.test(arima_gold$gold_diff)
 
 # ARIMA (p,d,q), d is 1 >> (0,1,2), (1,1,1), (1,1,2), (2,1,2)
-
 fit_1 <- arima_gold %>%
   model(arima012 = ARIMA(GOLD ~ pdq(0,1,2) + PDQ(0,0,0)),
         arima111 = ARIMA(GOLD ~ pdq(1,1,1) + PDQ(0,0,0)),
@@ -74,6 +71,7 @@ glance(fit_1) %>% arrange(AICc) %>% select(.model:BIC)
 fit_1 %>% select(arima111) %>% gg_tsresiduals() +
   labs(title = "ARIMA(1, 1, 1)_residuals")
 # Residuals check (RESULT: p-value = 0.0967 (> 0.05) >> white noise)
+
 augment(fit_1) %>% 
   filter(.model == 'arima111') %>% features(.innov, ljung_box, lag = 36, dof = 0)
 
@@ -83,7 +81,6 @@ fit_1 %>% select(auto) %>% gg_tsresiduals() +
 # Residuals check (RESULT: p-value = 0.268 (> 0.05) >> white noise)
 augment(fit_1) %>% 
   filter(.model == 'auto') %>% features(.innov, ljung_box, lag = 36, dof = 4)
-
 
 # MP3
 
@@ -113,7 +110,7 @@ augment(fit_2) %>%
 
 # Building the forecast, plot >>
 fit_2 %>% fabletools::forecast(h = 12) %>% filter_index("2023 Jan" ~ "2023 Dec") %>% autoplot() + 
-  labs(title = "Gold prices forecast for Y2023", y= "USD nominal")
+  labs(title = "Gold prices forecast for Y2023", y = "USD nominal")
 
 # Look at the forecasted values >>
 fit_2 %>% fabletools::forecast(h = 12) %>% filter_index("2023 Jan" ~ "2023 Dec")
@@ -122,12 +119,11 @@ fit_2 %>% fabletools::forecast(h = 12) %>% filter_index("2023 Jan" ~ "2023 Dec")
 # TASK 2
 
 # ARIMA(1,1,1)
-
+price <- tsb_gold$GOLD
 price_train <- tsb_gold$GOLD[-c(605, 606, 607, 608, 609, 610, 611, 612, 613, 614)]
 price_test <- tsb_gold %>% filter_index("2022 Mar" ~ "2022 Dec") 
 price_train_df <- na.aggregate(difference(price_train))
 price_test_df <- na.aggregate(difference(price_test$GOLD))
-
 
 arima(price_train, order = c(1,1,1))
 arima_t <- arima(price_train, order = c(1,1,1))
@@ -135,22 +131,22 @@ resid_arima <- residuals(arima_t)
 
 Box.test(resid_arima, lag=5) # >> p-value = 0.291
 
-
 # RESIDUALS
 ggtsdisplay(resid_arima)
 resid2_sq<-resid_arima^2
 ggtsdisplay(resid2_sq)
 
-# LM TEST >> p-value = 1.807e-12 >> artch effect present
+# LM TEST >> p-value = 1.807e-12 >> arch effect present
 resid2ArchLM <- FinTS::ArchTest(resid_arima, lags=2, demean=TRUE)
 resid2ArchLM
 
-#LET US TRY SOME GARCH
-arch_t <- garchFit(~garch(1, 0), data = price_train_df, cond.dist = c("std"), trace = F)
-summary(arch_t) #do not looks good
+#LET US LOOK AT SOME GARCH
+gold.arch <- garch(resid_arima, c(0,1)) # for residuals from the ARMA(2,1) above
+sum_gold.arch <- summary(gold.arch)
+sum_gold.arch #Jarque Bera Test >> p-value < 2.2e-16, Box-Ljung test >> p-value = 0.386
 
 #ESTIMATE garch_t = garchFit(~garch(1, 1), data = price_train_df, trace = F)
-garch_t = garchFit(~garch(1, 1), data = price_train_df, trace = F)
+garch_t = garchFit(~garch(1, 1), data = resid_arima, trace = F)
 summary(garch_t)
 pred_garch_G = predict(garch_t, 10, plot = TRUE)
 pred_garch_G[1]
@@ -164,16 +160,20 @@ arima_garch <- garchFit(price_train_df~arma(1,1)+garch(1,1), data=price_train_df
 predict_garch_arch = predict(arima_garch,n.ahead=10, plot = TRUE)
 predict_garch_arch[1]
 
-
-#PREDICTION FOR Y2023
+#PREDICTION FOR Y2023 USING GARCH and ARIMA
 price_2023 <- tsb_gold$GOLD
 price_2023_df <- na.aggregate(difference(price_2023))
 arima_garch_2023 <- garchFit(price_2023_df~arma(1,1)+garch(1,1), data=price_2023_df) 
 predict_2023 = predict(arima_garch_2023,n.ahead = 12, plot = TRUE)
 predict_2023[1]
 
+#PREDICTION FOR Y2023 USING ARIMA
+arima_2023 <- arima(price, order = c(1,1,1))
+arima_2023.pred <- predict(arima_2023, n.ahead=12)
+plot.ts(price)
+lines(arima_2023.pred$pred, col="blue")
+lines(arima_2023.pred$pred+2*arima_2023.pred$se, col="red")
+lines(arima_2023.pred$pred-2*arima_2023.pred$se, col="red")
+
 #dev.off()
-
-
-
 
