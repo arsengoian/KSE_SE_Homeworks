@@ -321,20 +321,6 @@ f_arima101 <- estimation %>% filter(.model == 'arima101')
 f_arima201 <- estimation %>% filter(.model == 'arima201')
 
 
-<<<<<<< HEAD
-model_report <- function(name, m, n) {
-  return( c(name, f_bias(m,n), f_RMSE(m,n), f_MAE(m,n), f_MAPE(m,n)))
-}
-
-different_models_report <- data.frame(
-  model_101 = model_report("Arima 101", f_1t, FORECAST_LENGTH),
-  model_201 = model_report("Arima 201", f_2t, FORECAST_LENGTH)
-)
-
-print(different_models_report)
-
-
-=======
 f_bias(f_arima101, FORECAST_LENGTH)
 f_RMSE(f_arima101, FORECAST_LENGTH) # 0.859, exactly as expected
 f_MAE(f_arima101, FORECAST_LENGTH) # 0.75, as expected
@@ -345,7 +331,18 @@ f_bias(f_arima201, FORECAST_LENGTH) # 0.1149302
 f_RMSE(f_arima201, FORECAST_LENGTH) # 0.8670345
 f_MAE(f_arima201, FORECAST_LENGTH) # 0.7577366
 f_MAPE(f_arima201, FORECAST_LENGTH) #3.656373
->>>>>>> 057a477afe021964212693b563f06d995f5fcbd6
+
+
+model_report <- function(name, m, n) {
+  return( c(name, f_bias(m,n), f_RMSE(m,n), f_MAE(m,n), f_MAPE(m,n)))
+}
+
+different_models_report <- data.frame(
+  model_101 = model_report("Arima 101", f_arima101, FORECAST_LENGTH),
+  model_201 = model_report("Arima 201", f_arima201, FORECAST_LENGTH)
+)
+
+print(different_models_report)
 
 #############################################################
 
