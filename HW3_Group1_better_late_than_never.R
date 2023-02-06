@@ -332,8 +332,6 @@ f_RMSE(f_arima201, FORECAST_LENGTH) # 0.8670345
 f_MAE(f_arima201, FORECAST_LENGTH) # 0.7577366
 f_MAPE(f_arima201, FORECAST_LENGTH) #3.656373
 
-
-
 #############################################################
 
 # 3. ARCH/GARCH
